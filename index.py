@@ -7,6 +7,7 @@ from flask import Flask, render_template, request, send_file
 import pandas as pd
 
 app = Flask(__name__)
+#3/8 how to make it show result in index. Need to save data in dictionary
 
 @app.route('/')
 def index():
@@ -32,14 +33,16 @@ def upload():
 
     temp_result='templates/tmp_result.html'
 
-    analyze_single_file(file_path,temp_result,PAM_option,PAM_option2)
+    PAM_forward=analyze_single_file(file_path,temp_result,PAM_option,PAM_option2)
 
+    '''
     with open(temp_result, 'r') as result_file:
         result_content = result_file.read()
-
+    print(result_content)
+    '''
     os.remove(file_path)
-
-    return render_template('result.html', result_content=result_content)
+    
+    return render_template('result.html', result_content=PAM_forward[1], result_content2=PAM_forward[0])
 
 def analyze_single_file(input_file_path, output_file_path, PAM_option, PAM_option2):
     try:
@@ -69,9 +72,9 @@ def analyze_single_file(input_file_path, output_file_path, PAM_option, PAM_optio
     PAM_reverse = PAM_reversestand(Reverse_strand, PAM_option2)
     forward_df = pd.DataFrame(PAM_forward[0])
     reverse_df = pd.DataFrame(PAM_reverse[0])
-    html_generator(output_file_path, DNA_sequence, Reverse_strand, PAM_forward, PAM_reverse, forward_df, reverse_df)
-
-
+    #html_generator(output_file_path, DNA_sequence, Reverse_strand, PAM_forward, PAM_reverse, forward_df, reverse_df)
+    return PAM_forward 
+'''
 def html_generator(output_file_path, DNA_sequence, Reverse_strand, PAM_forward, PAM_reverse, forward_df, reverse_df):
     with open(output_file_path, 'w') as file:
         file.write("<html><head><title>DNA Analysis Report</title></head><body>\n")
@@ -103,7 +106,7 @@ def html_generator(output_file_path, DNA_sequence, Reverse_strand, PAM_forward, 
             file.write("</div>")
 
         file.write("</body></html>")
-
+'''
 
 def PAM_forwardstrand(DNA_sequence, PAM_option):
     forwardstrand_sequence = list(DNA_sequence)
