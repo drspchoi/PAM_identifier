@@ -33,11 +33,11 @@ def upload():
 
     temp_result='templates/tmp_result.html'
 
-    PAM_forward=analyze_single_file(file_path,temp_result,PAM_option)
+    PAM_forward,PAM_reverse=analyze_single_file(file_path,temp_result,PAM_option)
 
     os.remove(file_path)
     
-    return render_template('result.html', result_content=PAM_forward[1], result_content2=PAM_forward[0])
+    return render_template('result.html', result_content=PAM_forward, result_content2=PAM_reverse)
 
 def analyze_single_file(input_file_path, output_file_path, PAM_option):
     try:
@@ -53,9 +53,8 @@ def analyze_single_file(input_file_path, output_file_path, PAM_option):
 
     PAM_forward = PAM_identifier(DNA_sequence, PAM_option,"forward")
     PAM_reverse = PAM_identifier(DNA_sequence, PAM_option,"backward")
-    forward_df = pd.DataFrame(PAM_forward[0])
-    reverse_df = pd.DataFrame(PAM_reverse[0])
-    return PAM_forward 
+
+    return PAM_forward, PAM_reverse 
 
 def ReverseStrandGenerator(DNA_sequence):
     Reverse_strand = ""
@@ -73,64 +72,43 @@ def ReverseStrandGenerator(DNA_sequence):
     return Reverse_strand
 
 def PAM_identifier(DNA_sequence, PAM_option, direction):
+    combined_results={'PAM_position':[], 'PAM+protospacer':[], 'G+C (%)':[]}
+    final_result={}
+
     if direction=="forward":
-        forwardstrand_sequence = list(DNA_sequence)
-        combined_results={'PAM_position':[],'PAM+protospacer':[],'G+C (%)':[]}
-        Final_result = {}
-        
-        for PAM in PAM_option:
-            forward_position = DNA_sequence.find(PAM)
-            while forward_position != -1:
-                protospacer = DNA_sequence[forward_position: forward_position + 25]
-                GC = (protospacer.count('g') + protospacer.count('c')) / len(protospacer) * 100
-                combined_results['PAM_position'].append(forward_position + 1)
-                combined_results['PAM+protospacer'].append(protospacer)
-                combined_results['G+C (%)'].append(GC)
-
-                forwardstrand_sequence[forward_position: forward_position + 4] = [
-                    '<strong style="color: red;">' + forwardstrand_sequence[forward_position],
-                    forwardstrand_sequence[forward_position + 1],
-                    forwardstrand_sequence[forward_position + 2],
-                    forwardstrand_sequence[forward_position + 3] + '</strong>']
-
-                forward_position = DNA_sequence.find(PAM, forward_position + 1)
-
-            Final_result[PAM]=combined_results
-            combined_results={'PAM_position':[],'PAM+protospacer':[],'G+C (%)':[]}
-    
-        return Final_result, ''.join(forwardstrand_sequence)
+        input_sequence = list(DNA_sequence)
 
     elif direction=="backward":
-        Reverse_strand=ReverseStrandGenerator(DNA_sequence)
-        Reverse_sequence = list(Reverse_strand)
-        result_reverse = []
-        final_result = []
-        PAM_option2 = [PAM[::-1] for PAM in PAM_option]
+        DNA_sequence=ReverseStrandGenerator(DNA_sequence)
+        input_sequence = list(DNA_sequence)
+        PAM_option=[PAM[::-1] for PAM in PAM_option]
+        
+    for PAM in PAM_option:
+        PAM_position = DNA_sequence.find(PAM)
 
-        for PAM in PAM_option2:
+        if direction=="backward" and PAM_position < 21:
+            continue   
 
-            Reverse_position = Reverse_strand.find(PAM)
+        while PAM_position != -1:
+            protospacer = DNA_sequence[PAM_position: PAM_position + 25] if direction =="forward" else DNA_sequence[PAM_position-21:PAM_position+4]
+            GC = (protospacer.count('g') + protospacer.count('c')) / len(protospacer) * 100
+            combined_results['PAM_position'].append(PAM_position + 1 if direction=="forward" else PAM_position +4)
+            combined_results['PAM+protospacer'].append(protospacer if direction=="forward" else protospacer[::-1])
+            combined_results['G+C (%)'].append(GC)
 
-            if Reverse_position < 21:
-                continue
+            input_sequence[PAM_position: PAM_position + 4] = [
+                    '<strong style="color: red;">' + input_sequence[PAM_position],
+                    input_sequence[PAM_position + 1],
+                    input_sequence[PAM_position + 2],
+                    input_sequence[PAM_position + 3] + '</strong>']
 
-            while Reverse_position != -1:
-                Protospacer = Reverse_strand[Reverse_position - 21: Reverse_position + 4]
-                GC = (Protospacer.count('g') + Protospacer.count('c')) / len(Protospacer) * 100
-                combined_results_reverse = {'PAM_position': Reverse_position + 4, 'PAM+protospacer': Protospacer[::-1],
-                                        'G+C (%)': GC}
-                result_reverse.append(combined_results_reverse)
+            PAM_position = DNA_sequence.find(PAM, PAM_position + 1)
 
-                Reverse_sequence[Reverse_position: Reverse_position + 4] = [
-                    '<strong style="color: red;">' + Reverse_sequence[Reverse_position],
-                    Reverse_sequence[Reverse_position + 1], Reverse_sequence[Reverse_position + 2],
-                    Reverse_sequence[Reverse_position + 3] + '</strong>']
+        final_result[PAM]=combined_results
+        combined_results={'PAM_position':[],'PAM+protospacer':[],'G+C (%)':[]}
+    
+    return final_result, ''.join(input_sequence)
 
-                Reverse_position = Reverse_strand.find(PAM, Reverse_position + 1)
-            final_result.append(result_reverse)
-            result_reverse = []
-
-        return final_result, ''.join(Reverse_sequence)
 
 if __name__=='__main__':
     app.run(debug=True)
