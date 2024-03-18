@@ -11,16 +11,24 @@
     <form action="/upload" method="post" enctype="multipart/form-data">
         <label for="file">Choose a file:</label>
         <input type="file" id="file" name="file" accept="*" />
-        <button type="submit">Upload</button>
+        <button type="submit">upload</button>
         <br><br>
     </form>
-    <form action="/analyze" method="post" enctype="multipart/form-data"></form>    
+    <form action="/analyze" method="post" enctype="multipart/form-data">  
         <label for="num">Enter sequences:</label>
         <input type="text" id="num" name="num" />
         <button type="submit">Analyze</button>        
         <br /><br>
     </form>
+    {% for row in result_content %}
+    <div>Name: {{row['name']}}</div>
+    <div>Sequence: {{row['sequence']}}</div>
+    {% endfor %}
+    <br>
+    {{result_content1 | safe}}
+    <br>
+    {{result_content2 | safe}}
+    <br>
 
-    {{result_content | safe}}
 </body>
 </html>
