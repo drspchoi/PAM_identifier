@@ -17,17 +17,19 @@
     <form action="/analyze" method="post" enctype="multipart/form-data">  
         <label for="num">Enter sequences:</label>
         <input type="text" id="num" name="num" />
+        <label for="sequences">Choose a gene to analyze</label>
+        <select name="sequences">
+            {% for row in result_content %}
+            <option value="{{row[0]}}">{{row[0]}}</option>
+            {% endfor %}
+        </select>
         <button type="submit">Analyze</button>        
         <br /><br>
     </form>
     {% for row in result_content %}
-    <div>Name: {{row['name']}}</div>
-    <div>Sequence: {{row['sequence']}}</div>
+    <div>Name: {{row[0]}}</div>
+    <div>Sequence: {{row[1]}}</div>
     {% endfor %}
-    <br>
-    {{result_content1 | safe}}
-    <br>
-    {{result_content2 | safe}}
     <br>
 
 </body>

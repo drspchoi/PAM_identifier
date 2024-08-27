@@ -1,25 +1,33 @@
 from flask import Flask, render_template, request, send_file, jsonify
-from sqlalchemy import create_engine,text
+#from sqlalchemy import create_engine,text
 from PAM_analyze import analyze_single_file
-
+import sqlite3
 
 app=Flask(__name__)
-engine=create_engine("mysql+pymysql://root:password@localhost/test")
+#engine=create_engine("mysql+pymysql://root:password@localhost/test")
+#connection = engine.connect()
 
-connection = engine.connect()
+
+
+'''
 def databaseConnect(engine):
     connection = engine.connect()
     result=connection.execute(text("select * from test2"))
     rows=result.mappings()
 
     return rows
-
+'''
+#8/26 sqlalchemy to sqlite3. Server is little bit complicated"
 @app.route('/')
 def index():
-    rows=databaseConnect(engine)
+    conn=sqlite3.connect("gene_data.db")
+    cursor=conn.cursor()
+    cursor.execute("select * from DNA_list")
+    #rows=databaseConnect(engine)
     
-    return render_template('index.html',result_content=rows)
+    return render_template('index.html',result_content=cursor.fetchall())
 
+#8/26 Upload is working. But code is too complicated, 8/27 Upload and analysis worked. request.form didn't work for a while but it worked now. How to render it...beutifully..
 @app.route('/upload', methods=['POST'])
 def upload():
     if 'file' not in request.files:
@@ -35,23 +43,25 @@ def upload():
     sequence=str(sequence, 'utf-8')
     sequence=''.join(sequence).replace('\r\n', '')
     
-    connection.execute(text(f"insert into test2 (name, sequence) values ('{file_name}', '{sequence}')"))
-    connection.commit()
+    conn=sqlite3.connect("gene_data.db")
+    cursor=conn.cursor()
+    cursor.execute("insert into DNA_list (dna) values(?)", [sequence])
+    print("added ", sequence)
+    cursor.execute("select * from DNA_list")
+    #conn.commit()
     
-    rows=databaseConnect(engine)
+    return render_template('index.html', result_content=cursor.fetchall())
 
-    return render_template('index.html', result_content=rows)
-
-# why analysis doesn't work?
 @app.route('/analyze', methods=['POST'])
 def analyze():
     PAM_option=request.form.get('num').split(',')
-    sequence=connection.execute(text("select sequence from test2 where id=1"))
-    sequence=sequence.mappings()
-    print(sequence)
-    PAM_forward,PAM_reverse=analyze_single_file(sequence,PAM_option)
-    print(PAM_forward)
-    return render_template('index.html', result_content1=PAM_forward, result_content2=PAM_reverse)
+    gene_number=request.form.get('sequences')
+    conn=sqlite3.connect("gene_data.db")
+    cursor=conn.cursor()
+    cursor.execute("select dna from DNA_list where id= ?", (gene_number))
+    sequence=cursor.fetchone()
+    PAM_forward,PAM_reverse=analyze_single_file(sequence[0],PAM_option)
+    return render_template('result.html', PAM_option=PAM_option, result_content=PAM_forward, result_content2=PAM_reverse)
 
 @app.route('/data')
 def databank():
