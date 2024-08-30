@@ -7,13 +7,28 @@
 </head>
 <body>
     <!-- Use Flask's include function to include the content of the temporary HTML file -->
-    {% for row in PAM_option %}
-        {{ row }}
-        <br>
-        {{ result_content[0][row]}}
-    {% endfor %}
+    <h2> gene {{gene_number}} analyis result</h2>
+    <h4> Forward strand analysis result</h4>
+        {{PAM_forward[1]| safe}}
     <br>
-    {{ result_content2| safe}}
+        {% for row in PAM_option %}
+            for {{ row }}
+            <br>
+            {% for result in PAM_forward[0][row] %}
+            <li>{{result}} {{PAM_forward[0][row][result]| safe}}</li>
+            {% endfor %}
+        {% endfor %}
+    <br>
+    <h4> Reverse strand analysis result</h4>
+        {{PAM_reverse[1]| safe}}
+    <br>
+        {% for row in PAM_option %}
+            {{ row }}
+            {% for result in PAM_reverse[0][row] %}
+    <li>    {{result}} {{PAM_reverse[0][row][result]| safe}}</li>
+            {% endfor %}
+        {% endfor %}
+
 
 </body>
 </html>

@@ -43,6 +43,7 @@ def PAM_identifier(DNA_sequence, PAM_option, direction):
         while PAM_position != -1:
             protospacer = DNA_sequence[PAM_position: PAM_position + 25] if direction =="forward" else DNA_sequence[PAM_position-21:PAM_position+4]
             GC = (protospacer.count('g') + protospacer.count('c')) / len(protospacer) * 100
+            GC = "{:.2f}".format(GC)
             combined_results['PAM_position'].append(PAM_position + 1 if direction=="forward" else PAM_position +4)
             combined_results['PAM+protospacer'].append(protospacer if direction=="forward" else protospacer[::-1])
             combined_results['G+C (%)'].append(GC)

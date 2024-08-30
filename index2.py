@@ -31,15 +31,15 @@ def upload():
     PAM_option=request.form.get('num').split(',')
     print(PAM_option)
 
-    temp_result='templates/tmp_result.html'
+    #temp_result='templates/tmp_result.html'
 
-    PAM_forward,PAM_reverse=analyze_single_file(file_path,temp_result,PAM_option)
+    PAM_forward,PAM_reverse=analyze_single_file(file_path,PAM_option)
 
     os.remove(file_path)
     
-    return render_template('result.html', result_content=PAM_forward, result_content2=PAM_reverse)
+    return render_template('index5.html', result_content=PAM_forward, result_content2=PAM_reverse)
 
-def analyze_single_file(input_file_path, output_file_path, PAM_option):
+def analyze_single_file(input_file_path, PAM_option):
     try:
         with open(input_file_path, 'r') as file:
             DNA_sequence = file.read()
@@ -53,7 +53,6 @@ def analyze_single_file(input_file_path, output_file_path, PAM_option):
 
     PAM_forward = PAM_identifier(DNA_sequence, PAM_option,"forward")
     PAM_reverse = PAM_identifier(DNA_sequence, PAM_option,"backward")
-
     return PAM_forward, PAM_reverse 
 
 def ReverseStrandGenerator(DNA_sequence):
